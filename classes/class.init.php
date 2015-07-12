@@ -27,6 +27,15 @@ class  PIGPR_Init {
 		add_action( 'wp_ajax_PIGPR_DELETE_FROM_GROUP', array( $this, 'delete_from_group' ) );
 
 		add_action( 'init', array( $this, 'init' ) );
+		add_filter( 'wp_redirect', array( $this, 'wp_redirect' ) );
+
+	}
+
+	function wp_redirect( $location ) {
+		if ( $_REQUEST['plugin_group'] && $_REQUEST['action'] !== 'delete_group' ) {
+			$location = add_query_arg( 'plugin_group', $_REQUEST['plugin_group'], $location );
+		}
+		return $location;
 	}
 
 	function init() {
@@ -137,15 +146,17 @@ class  PIGPR_Init {
 	 */
 	function create_group() {
 		$groups = get_option( 'plugin_groups' );
+		$group_name = $_POST[ 'group_name' ];
+		$plugin_id = $_POST[ 'plugin_id' ];
 
-		$name = $_POST[ 'group_name' ];
-		$key = sanitize_title( $name );
+		$group_id = sanitize_title( $group_name );
 
-		if ( $key && empty( $groups[$key] ) ) {
-			$groups[$key] = $name;
+		if ( $group_id && empty( $groups[$group_id] ) ) {
+			$groups[$group_id] = $group_name;
 			update_option( 'plugin_groups', $groups );
 
-			echo json_encode( array( $key, $name ) );
+			echo json_encode( array( $group_id, $group_name ) );
+			$this->input_into_group( $group_id, $group_name, $plugin_id, false );
 		}
 
 		wp_die();
@@ -157,13 +168,13 @@ class  PIGPR_Init {
 	 * @since 1.0.0
 	 * @access public
 	 */
-	function input_into_group() {
+	function input_into_group( $group_id = false, $group_name = false, $plugin_id = false, $echo = true ) {
 		$groups = get_option( 'plugin_groups_match' );
 		$plugins = get_option( 'groups_plugin_match' );
 
-		$group_id = $_POST[ 'group_id' ];
-		$group_name = $_POST[ 'group_name' ];
-		$plugin_id = $_POST[ 'plugin_id' ];
+		$group_id = ( !$group_id ) ? $_POST[ 'group_id' ] : $group_id;
+		$group_name = ( !$group_name ) ? $_POST[ 'group_name' ] : $group_name;
+		$plugin_id = ( !$plugin_id ) ? $_POST[ 'plugin_id' ] : $plugin_id;
 
 		if ( !is_array( $groups ) ) $groups = array();
 		if ( !is_array( $groups[$plugin_id] ) ) $groups[$plugin_id] = array();
@@ -177,7 +188,8 @@ class  PIGPR_Init {
 		update_option( 'plugin_groups_match', $groups );
 		update_option( 'groups_plugin_match', $plugins );
 
-		echo json_encode( array( $this->get_plugins_url() . '?plugin_group=' . $group_id ) );
+		if ( $echo )
+			echo json_encode( array( $this->get_plugins_url() . '?plugin_group=' . $group_id ) );
 
 		wp_die();
 	}
@@ -310,35 +322,3 @@ class  PIGPR_Init {
 }
 
 new PIGPR_Init();
-
-
-
-
-
-
-
-/*
-	function manage_columns( $columns ) {
-		$columns[ 'group' ] = 'Group';
-		return $columns;
-	}
-
-	function manage_custom_column( $column_name, $plugin_file, $plugin_data ) {
-		switch ( $column_name ) {
-			case 'group' :
-				$groups = get_option( 'plugin_groups_match' );
-				$slug = sanitize_title( $plugin_data['Name'] );
-
-				foreach( $groups[$slug] as $key => $name ) {
-					?>
-					<a href="<?php echo $this->get_plugins_url() . '?plugin_group=' . $key  ?>" data-id="<?php echo $key ?>"><?php echo $name ?></a>
-					<?php
-				}
-
-				break;
-		}
-	}
-*/
-
-
-

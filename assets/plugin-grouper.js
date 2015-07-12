@@ -1,102 +1,134 @@
 jQuery( document ).ready( function( $ ) {
+	// <!-- 표에 그룹 버튼 추가
 	$( '.wp-list-table.plugins .row-actions span:last-child' ).append( ' | ' );
 	$( '.wp-list-table.plugins tbody tr' ).each( function() {
 		var id = $(this).attr( 'id' );
-		$(this).find( '.row-actions' ).append( '<span class="group"><a href="#" class="action-grouping" data-id="'+id+'">Group</a></span>' );
+		$(this).find( '.row-actions' ).append( '<span class="group"><a href="#" class="button-grouping" data-id="'+id+'">Group</a></span>' );
 	});
+	// 표에 그룹 버튼 추가 -->
 
+	// <!-- 그룹 보기 모드일 경우 타이틀 바꾸기
 	if ( $( 'input#plugin_group_name' ).length ) {
 		change_header( $( 'input#plugin_group_name' ).val() );
+		change_links( getUrlParameter( 'plugin_group' ) );
+	}
+	// 그룹 보기 모드일 경우 타이틀 바꾸기 -->
+
+	// <!-- 가져오기 시리즈 ( 체크박스 )
+	function get_checkbox( checkbox_id ) {
+		if ( checkbox_id ) return $( '.plugin_grouper_wrap input[type="checkbox"][data-id="' + escape_special_character( checkbox_id ) +'"]' );
+		return $( '.plugin_grouper_wrap input[type="checkbox"]' );
 	}
 
-	// 개별 그룹 액션
-	$( '.action-grouping' ).click( function(e) {
+	// <!-- 가져오기 시리즈 ( 플러그인 테이블 로우 )
+	function get_row( plugin_id ) {
+		if ( plugin_id ) return $( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) );
+
+		// 없음 입력창
+		return $( '.plugin_grouper_wrap' );
+	}
+	// 가져오기 시리즈 -->
+
+	// <!-- Binding 개별 항목 액션
+	$( '.button-grouping' ).click( function( e ) {
 		e.preventDefault();
 
+		// 만일 열려있다면? 닫고 끝
 		if ( $(this).hasClass( 'group_open' ) ) {
 			close_grouping();
 			return true;
 		}
+		// 일단 전부 닫고,
 		close_grouping();
 
-		var id = $(this).attr( 'data-id' );
-		var html = $( '#Grouping-Row' ).html()
+		// 현재 플러그인의 아이디 추출
+		var plugin_id = $(this).attr( 'data-id' );
+		// 폼 클론 뜨고, id와 for 부여
+		var $groupingRow = $( '#Grouping-Row' ).clone();
 
-		$( '.wp-list-table.plugins tr#'+escape_special_character( id ) ).after('<tr class="inactive grouping" data-id="'+id+'"><td colspan="1000">'+html+'</td></tr>');
+		// tr 삽입
+		get_row( plugin_id ).after( '<tr class="inactive plugin_grouper_wrap" data-id="' + plugin_id + '"><td colspan="1000">' + $groupingRow.html() + '</td></tr>' );
 
+		// radio 버튼 조정
+		$( '.plugin_grouper_wrap li' ).each( function( number ) {
+			var id = 'group_radio_' + number;
+
+			$(this).find( 'input' ).attr( 'data-plugin-id', plugin_id );
+			$(this).find( 'input' ).attr( 'id', id );
+			$(this).find( 'label' ).attr( 'for', id );
+
+		});
+
+		// 클라스 지정
+		$(this).addClass( 'group_open' );
+
+		// 바인딩
 		bind_button_close();
 		bind_button_create();
 		checkbox_action();
-		checkbox_checking( id );
+		checkbox_checking( plugin_id );
 
-		$(this).addClass( 'group_open' );
 		return true;
 	});
+	// Binding 개별 항목 액션 -->
 
-	// 체크박스를 클릭했을 때
+	// <!-- 체크박스를 클릭했을 때
 	function checkbox_action() {
-		$( '.wp-list-table.plugins tr.grouping ul li input[type="checkbox"]' ).click( function() {
+		get_checkbox().click( function() {
+			var plugin_id = $(this).attr( 'data-plugin-id' );
+			var group_id = $(this).attr( 'data-id' );
+			var group_name = $(this).attr( 'data-name' );
+
+			var data = {
+				'plugin_id' : plugin_id,
+				'group_id' : group_id,
+				'group_name' : group_name
+			};
+
+			disable_grouping();
+
 			// 그룹에 추가
-			if ( $(this).is(":checked") ) {
-				var plugin_id = $(this).parent().parent().parent().parent().attr( 'data-id' );
-
-				var group_id = $(this).attr( 'data-id' );
-				var group_name = $(this).attr( 'data-name' );
-
-				var data = {
-					'action': 'PIGPR_INPUT_INTO_GROUP',
-					'plugin_id' : plugin_id,
-					'group_id' : group_id,
-					'group_name' : group_name
-				};
-
-				disable_grouping();
+			if ( $(this).is( ":checked" ) ) {
+				data.action = 'PIGPR_INPUT_INTO_GROUP';
 
 				$.post( ajaxurl, data, function( response ) {
-					enable_grouping();
-
-					var html = '<a href="'+response[0]+'" data-id="'+escape_special_character( group_id )+'">'+group_name+'</a>';
+					var html = '<a href="'+response[0]+'" data-id="' + group_id + '">'+group_name+'</a>';
 					$( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) + ' td.column-description .groups' ).append( html );
+					enable_grouping();
 				}, 'json' );
-			} else {
+
 			// 그룹에서 제외
-				var plugin_id = $(this).parent().parent().parent().parent().attr( 'data-id' );
-				var group_id = $(this).attr( 'data-id' );
-				var group_name = $(this).attr( 'data-name' );
-
-				var data = {
-					'action': 'PIGPR_DELETE_FROM_GROUP',
-					'plugin_id' : plugin_id,
-					'group_id' : group_id,
-					'group_name' : group_name
-				};
-
-				disable_grouping();
+			} else {
+				data.action = 'PIGPR_DELETE_FROM_GROUP';
 
 				$.post( ajaxurl, data, function( response ) {
+					$( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) + ' td.column-description .groups a[data-id="'+ group_id +'"]' ).remove();
 					enable_grouping();
-
-					$( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) + ' td.column-description .groups a[data-id="'+escape_special_character( group_id )+'"]' ).remove();
 				}, 'json' );
 			}
 		});
 	}
+	// 체크박스를 클릭했을 때 -->
 
+	// <!-- 입력창 닫기
 	function close_grouping() {
-		$( '.wp-list-table.plugins tr.grouping' ).remove();
+		get_row().remove();
 		$( '.group_open' ).removeClass( 'group_open' );
 	}
+	// 입력창 닫기 -->
 
+	// <-- 셀렉트 폼 일시정지 & 재가동
 	function disable_grouping() {
 		$( '.wp-list-table.plugins .loading_spinner' ).show();
-		$( '.wp-list-table.plugins tr.grouping ul li input[type="checkbox"]' ).attr( 'disabled', true );
+		get_checkbox().attr( 'disabled', true );
 	}
-
 	function enable_grouping() {
 		$( '.wp-list-table.plugins .loading_spinner' ).hide();
-		$( '.wp-list-table.plugins tr.grouping ul li input[type="checkbox"]' ).removeAttr( 'disabled' );
+		get_checkbox().removeAttr( 'disabled' );
 	}
+	// 셀렉트 폼 일시정지 & 재가동 -->
 
+	// <!-- 그룹 윈도우 내부 버튼들 (생성, 닫기)
 	function bind_button_close() {
 		$( '.wp-list-table.plugins .btn-close_group' ).click( function(e) {
 			e.preventDefault();
@@ -104,14 +136,16 @@ jQuery( document ).ready( function( $ ) {
 			return true;
 		});
 	}
-
 	function bind_button_create() {
 		$( '.wp-list-table.plugins .btn-create_group' ).click( function(e) {
 			e.preventDefault();
+
 			if ( $( '.wp-list-table.plugins .inp-create_group' ).val().length ) {
+				var plugin_id = $( '.plugin_grouper_wrap' ).attr( 'data-id' );
 				var data = {
 					'action': 'PIGPR_CREATE_GROUP',
-					'group_name' : $( '.wp-list-table.plugins .inp-create_group' ).val()
+					'group_name' : $( '.wp-list-table.plugins .inp-create_group' ).val(),
+					'plugin_id' : plugin_id
 				};
 
 				disable_grouping();
@@ -119,26 +153,53 @@ jQuery( document ).ready( function( $ ) {
 				$.post( ajaxurl, data, function( response ) {
 					enable_grouping();
 
-					var html = '<li><input id="group-'+response[0]+'" type="checkbox" data-id="'+response[0]+'"  data-name="'+response[1]+'">'+response[1]+'</li>';
-					$( '.wp-list-table.plugins tr.grouping ul' ).append( html );
-					$( '#Grouping-Row ul' ).append( html );
+					var group_id = response[0];
+					var group_name = response[1];
+
+					$( '.plugin_grouper_wrap ul' ).append( '<li></li>' );
+					$( '#Grouping-Row ul' ).append( '<li></li>' );
+
+					var $li = $( '.plugin_grouper_wrap ul li:last-child' );
+					var $gr_li = $( '#Grouping-Row ul li:last-child' );
+
+					var index = $li.index();
+
+					html = '<input id="group_radio_' + index + '" type="checkbox" data-id="' + group_id + '"  data-name="' + group_name + '" data-plugin-id="' + plugin_id + '" />';
+					html += '<label for="group_radio_' + index + '">' + group_name + '</label>';
+
+					$li.html( html );
+
+					html = '<input type="checkbox" data-id="' + group_id + '"  data-name="' + group_name + '" data-plugin-id="' + plugin_id + '" />';
+					html += '<label>' + group_name + '</label>';
+
+					$gr_li.html( html );
 
 					checkbox_action();
+					checkbox_checking( plugin_id, group_id );
 					$( '.wp-list-table.plugins .inp-create_group' ).val('');
 				}, 'json' );
+			} else {
+				$( '.wp-list-table.plugins .inp-create_group' ).focus();
 			}
 			return true;
 		});
 	}
+	// 그룹 윈도우 내부 버튼들 (생성, 닫기) -->
 
-	function checkbox_checking( plugin_id ) {
-		$( '.wp-list-table.plugins tr.grouping ul li input' ).removeAttr( 'checked' );
+	// <!-- 플러그인 선택했을 때 체크박스 체크하기
+	function checkbox_checking( plugin_id, group_id ) {
+		get_checkbox().removeAttr( 'checked' );
 
-		$( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) + ' td.column-description .groups a' ).each( function() {
+		get_row( plugin_id ).find( 'td.column-description .groups a' ).each( function() {
 			var id = $(this).attr( 'data-id' );
-			$( '.wp-list-table.plugins tr.grouping ul li input[data-id="' + escape_special_character( id ) +'"]' ).attr( 'checked', true );
+			get_checkbox( id ).attr( 'checked', true );
 		});
+
+		if ( group_id ) {
+			get_checkbox( group_id ).attr( 'checked', true );
+		}
 	}
+	// 플러그인 선택했을 때 체크박스 체크하기 -->
 
 	function change_header( plugin_group_name ) {
 		var plugin_group_id = getUrlParameter( 'plugin_group' );
@@ -152,6 +213,17 @@ jQuery( document ).ready( function( $ ) {
 			window.location.href = window.location.href + "&action=delete_group&group_id=" + plugin_group_id;
 		});
 	}
+	function change_links( plugin_group ) {
+		$( '.wp-list-table.plugins tbody tr' ).each( function() {
+			var _activate = $(this).find( 'td.plugin-title .activate a' ).attr( 'href' ) + '&plugin_group=' + plugin_group;
+			var _deactivate = $(this).find( 'td.plugin-title .deactivate a' ).attr( 'href' ) + '&plugin_group=' + plugin_group;
+			var _delete = $(this).find( 'td.plugin-title .delete a' ).attr( 'href' ) + '&plugin_group=' + plugin_group;
+
+			$(this).find( 'td.plugin-title .activate a' ).attr( 'href', _activate );
+			$(this).find( 'td.plugin-title .deactivate a' ).attr( 'href', _deactivate );
+			$(this).find( 'td.plugin-title .delete a' ).attr( 'href', _delete );
+		});
+	}
 
 	function getUrlParameter(sParam) {
 		var sPageURL = window.location.search.substring(1);
@@ -163,29 +235,8 @@ jQuery( document ).ready( function( $ ) {
 			}
 		}
 	}
-
 	function escape_special_character( text ) {
 		text = text.replace( /([ #;?%&,.+*~\':"!^$[\]()=>|\/@])/g,'\\$1' );
 		return text;
 	}
 });
-
-
-
-
-
-
-/*
-	// 벌크 액션
-	$( '.tablenav select' ).append( '<option value="group-selected">Grouping</option>' );
-	$( '#bulk-action-form #doaction' ).click( function(e) {
-		if ( $( '#bulk-action-selector-top' ).val() == 'group-selected' ) {
-			e.preventDefault();
-		}
-	});
-	$( '#bulk-action-form #doaction2' ).click( function() {
-		if ( $( '#bulk-action-selector-bottom' ).val() == 'group-selected' ) {
-			e.preventDefault();
-		}
-	});
-*/
