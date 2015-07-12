@@ -110,7 +110,7 @@ class  PIGPR_Init {
 	 */
 	function delete_group() {
 		$action = $_GET['action'];
-		$group_id = $_GET['group_id'];
+		$group_id = strtolower( urlencode( $_GET['group_id'] ) );
 
 		if ( $action != 'delete_group' || empty( $group_id ) ) return false;
 
@@ -286,7 +286,7 @@ class  PIGPR_Init {
 			$views['all'] = '<a href="plugins.php?plugin_status=all">All</a>';
 
 			foreach( $groups as $key => $value ) {
-				$class = ( $_GET['plugin_group'] == $key ) ? 'current' : '';
+				$class = ( strtolower( urlencode( $_GET['plugin_group'] ) ) == strtolower( $key ) ) ? 'current' : '';
 				$views[$key] = '<a href="plugins.php?plugin_group='.$key.'" class="'.$class.'">'.$value.'</a>';
 			}
 		} else {

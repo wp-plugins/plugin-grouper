@@ -4,7 +4,7 @@ Donate link: http://www.sujinc.com/donation
 Tags: plugin, group, category
 Requires at least: 4.2.2
 Tested up to: 4.2.2
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -25,11 +25,14 @@ If your plugin admin page had so many items, you would be struggle to manage the
 
 == Changelog ==
 
+= 1.5.1 =
+* UTF-8 Error when delete the group
+
 = 1.5.0 =
 * Fix Some Errors
-** UTF-8 Error
-** Redirection Error
-** Multiple Group Selection Error
+- UTF-8 Error
+- Redirection Error
+- Multiple Group Selection Error
 
 = 1.1.0 =
 * Enable for Network Admin
@@ -37,7 +40,9 @@ If your plugin admin page had so many items, you would be struggle to manage the
 = 1.0.0 =
 * Original Version
 
+== ToDo ==
 
+* Group Creation : Enter to Input
 
 
 
