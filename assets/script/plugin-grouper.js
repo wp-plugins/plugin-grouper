@@ -1,12 +1,4 @@
 jQuery( document ).ready( function( $ ) {
-	// <!-- 표에 그룹 버튼 추가
-	$( '.wp-list-table.plugins .row-actions span:last-child' ).append( ' | ' );
-	$( '.wp-list-table.plugins tbody tr' ).each( function() {
-		var id = $(this).attr( 'id' );
-		$(this).find( '.row-actions' ).append( '<span class="group"><a href="#" class="button-grouping" data-id="'+id+'">Group</a></span>' );
-	});
-	// 표에 그룹 버튼 추가 -->
-
 	// <!-- 그룹 보기 모드일 경우 타이틀 바꾸기
 	if ( $( 'input#plugin_group_name' ).length ) {
 		change_header( $( 'input#plugin_group_name' ).val() );
@@ -16,13 +8,18 @@ jQuery( document ).ready( function( $ ) {
 
 	// <!-- 가져오기 시리즈 ( 체크박스 )
 	function get_checkbox( checkbox_id ) {
-		if ( checkbox_id ) return $( '.plugin_grouper_wrap input[type="checkbox"][data-id="' + escape_special_character( checkbox_id ) +'"]' );
+		if ( checkbox_id ) {
+			return $( '.plugin_grouper_wrap input[type="checkbox"][data-id="' + escape_special_character( checkbox_id ) +'"]' );
+		}
+
 		return $( '.plugin_grouper_wrap input[type="checkbox"]' );
 	}
 
 	// <!-- 가져오기 시리즈 ( 플러그인 테이블 로우 )
 	function get_row( plugin_id ) {
-		if ( plugin_id ) return $( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) );
+		if ( plugin_id ) {
+			return $( '.wp-list-table.plugins tr#' + escape_special_character( plugin_id ) );
+		}
 
 		// 없음 입력창
 		return $( '.plugin_grouper_wrap' );
@@ -137,6 +134,13 @@ jQuery( document ).ready( function( $ ) {
 		});
 	}
 	function bind_button_create() {
+		$( '.wp-list-table.plugins .inp-create_group' ).keypress( function(e) {
+			if ( e.which === 10 || e.which === 13 ) {
+				$( '.wp-list-table.plugins .btn-create_group' ).click();
+				e.preventDefault();
+			}
+		});
+
 		$( '.wp-list-table.plugins .btn-create_group' ).click( function(e) {
 			e.preventDefault();
 
@@ -164,6 +168,7 @@ jQuery( document ).ready( function( $ ) {
 
 					var index = $li.index();
 
+					var html = '';
 					html = '<input id="group_radio_' + index + '" type="checkbox" data-id="' + group_id + '"  data-name="' + group_name + '" data-plugin-id="' + plugin_id + '" />';
 					html += '<label for="group_radio_' + index + '">' + group_name + '</label>';
 
@@ -175,8 +180,8 @@ jQuery( document ).ready( function( $ ) {
 					$gr_li.html( html );
 
 					checkbox_action();
-					checkbox_checking( plugin_id, group_id );
 					$( '.wp-list-table.plugins .inp-create_group' ).val('');
+					$( '#group_radio_' + index ).click();
 				}, 'json' );
 			} else {
 				$( '.wp-list-table.plugins .inp-create_group' ).focus();
@@ -187,17 +192,13 @@ jQuery( document ).ready( function( $ ) {
 	// 그룹 윈도우 내부 버튼들 (생성, 닫기) -->
 
 	// <!-- 플러그인 선택했을 때 체크박스 체크하기
-	function checkbox_checking( plugin_id, group_id ) {
+	function checkbox_checking( plugin_id ) {
 		get_checkbox().removeAttr( 'checked' );
 
 		get_row( plugin_id ).find( 'td.column-description .groups a' ).each( function() {
 			var id = $(this).attr( 'data-id' );
 			get_checkbox( id ).attr( 'checked', true );
 		});
-
-		if ( group_id ) {
-			get_checkbox( group_id ).attr( 'checked', true );
-		}
 	}
 	// 플러그인 선택했을 때 체크박스 체크하기 -->
 
@@ -230,7 +231,7 @@ jQuery( document ).ready( function( $ ) {
 		var sURLVariables = sPageURL.split('&');
 		for (var i = 0; i < sURLVariables.length; i++)  {
 			var sParameterName = sURLVariables[i].split('=');
-			if (sParameterName[0] == sParam)  {
+			if (sParameterName[0] === sParam)  {
 				return sParameterName[1];
 			}
 		}
