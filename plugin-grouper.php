@@ -3,7 +3,7 @@
  * Plugin Name: Plugin Grouper
  * Plugin URI: http://www.sujinc.com/
  * Description: Too many plugins bother you? Make them into group!
- * Version: 1.5.1
+ * Version: 1.5.2
  * Author: Sujin 수진 Choi
  * Author URI: http://www.sujinc.com/
  * License: GPLv2 or later

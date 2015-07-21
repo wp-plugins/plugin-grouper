@@ -4,7 +4,7 @@ Donate link: http://www.sujinc.com/donation
 Tags: plugin, group, category
 Requires at least: 4.2.2
 Tested up to: 4.2.2
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -24,6 +24,11 @@ If your plugin admin page had so many items, you would be struggle to manage the
 4. Group View
 
 == Changelog ==
+= 1.5.2 =
+* Make .less and minified javascript
+* Fix Some Minor Errors
+- Enter to create group
+- After Checking just-created-group, set tag on the table
 
 = 1.5.1 =
 * UTF-8 Error when delete the group
@@ -39,10 +44,6 @@ If your plugin admin page had so many items, you would be struggle to manage the
 
 = 1.0.0 =
 * Original Version
-
-== ToDo ==
-
-* Group Creation : Enter to Input
 
 
 

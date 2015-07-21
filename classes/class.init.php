@@ -3,7 +3,7 @@
  * Init
  *
  * project	Plugin Grouper
- * version	1.0.0
+ * version	1.5.2
  * Author: Sujin 수진 Choi
  * Author URI: http://www.sujinc.com/
  *
@@ -49,6 +49,8 @@ class  PIGPR_Init {
  		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_scripts' ) );
 		add_filter( "views_plugins", array( $this, 'views_plugins' ) );
 		add_filter( "views_plugins-network", array( $this, 'views_plugins' ) );
+		// Group Buttons
+		add_filter( 'plugin_action_links' , array( $this, 'plugin_action_link' ), 15, 4 );
 /*
 		add_filter( "manage_plugins_columns", array( $this, 'manage_columns' ) );
 		add_action( 'manage_plugins_custom_column', array( $this, 'manage_custom_column' ), 15, 3 );
@@ -62,6 +64,18 @@ class  PIGPR_Init {
 			add_action( 'admin_footer', array( $this, 'print_group_information' ) );
 			add_action( 'wp_loaded', array( $this, 'delete_group' ) );
 		}
+	}
+
+	/**
+	 * Filter[plugin_action_links] : Group Buttons
+	 *
+	 * @since 1.5.2
+	 * @access public
+	 *
+	 */
+	function plugin_action_link( $actions, $plugin_file, $plugin_data, $a ) {
+		$actions['group'] = '<a href="#" class="button-grouping" data-id="' . sanitize_title( $plugin_data['Name'] ) . '">Group</a>';
+		return $actions;
 	}
 
 	/**
@@ -263,8 +277,8 @@ class  PIGPR_Init {
 	 */
 	function enqueue_scripts() {
 		# Adding Grouping Actions on Dropdown Menu
-		wp_enqueue_script( 'plugin-grouper', PIGPR_ASSETS_URL . 'plugin-grouper.js', array( 'jquery' ), '1.0.0' );
-		wp_enqueue_style( 'plugin-grouper', PIGPR_ASSETS_URL . 'plugin-grouper.css' );
+		wp_enqueue_script( 'plugin-grouper', PIGPR_ASSETS_URL . 'script-min/plugin-grouper-min.js', array( 'jquery' ), '1.0.1' );
+		wp_enqueue_style( 'plugin-grouper', PIGPR_ASSETS_URL . 'css/plugin-grouper.css' );
 	}
 
 	/**
